@@ -2,18 +2,18 @@
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 WORKDIR /app
 
-# Copy all source files
+# Copy everything
 COPY . .
 
-# Package the application (skip tests to speed up)
-RUN ./mvnw clean package -DskipTests
+# Build with Maven wrapper (make sure it's executable!)
+RUN chmod +x mvnw && ./mvnw clean package -DskipTests
 
 # --- Step 2: Runtime Stage ---
 FROM openjdk:17-jdk-alpine
 WORKDIR /app
 
-# Copy the built jar from the previous stage
+# Copy JAR from builder stage
 COPY --from=builder /app/target/*.jar app.jar
 
-# Run the application
+# Run
 ENTRYPOINT ["java", "-jar", "app.jar"]
