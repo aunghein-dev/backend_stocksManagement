@@ -1,11 +1,4 @@
-# Java 17 image
 FROM openjdk:17-jdk-alpine
-
-# Set directory
 WORKDIR /app
-
-# Copy JAR
-COPY target/*.jar app.jar
-
-# Run backend
+COPY target/SpringTemplate-0.0.1-SNAPSHOT.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
