@@ -119,14 +119,14 @@ public class UserController {
 
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
-                    .secure(true)  // ONLY in dev
-                    .sameSite("None") // or "Lax", depending on frontend/backend domains
+                    .secure(true)  // Must be true for SameSite=None
+                    .sameSite("None")
                     .path("/")
                     .maxAge(Duration.ofHours(24))
+                    .domain(".ngrok-free.app") // Add your ngrok domain
                     .build();
 
 
-            System.out.println(cookie.toString());
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
             return ResponseEntity.ok(Map.of("message", "Login successful"));

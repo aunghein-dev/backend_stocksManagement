@@ -8,7 +8,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-
 @Configuration
 @EnableWebSecurity
 public class CorsConfig {
@@ -16,13 +15,19 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // Use this instead of setAllowedOrigins
+
+        configuration.setAllowedOrigins(Arrays.asList(
+                "https://f196-51-79-156-236.ngrok-free.app",
+                "http://localhost:3000"
+        ));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
-        configuration.setAllowCredentials(true); // <--- **THIS IS CRITICAL for cookies/session**
-        configuration.setMaxAge(3600L); // How long the pre-flight request can be cached
+        configuration.setAllowCredentials(true); // ✅ Required to allow cookies across origins
+        configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Apply this CORS config to all paths
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
