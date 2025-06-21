@@ -11,6 +11,6 @@ RUN ./mvnw clean install -DskipTests
 # Stage 2: Create the final, lightweight runtime image
 FROM openjdk:17-jdk-alpine
 WORKDIR /app
->>> COPY --from=builder /app/target/*.jar app.jar <<< (This line copies from the previous Docker build stage)
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
