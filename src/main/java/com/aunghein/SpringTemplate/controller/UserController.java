@@ -122,7 +122,6 @@ public class UserController {
                     .secure(true)
                     .sameSite("None")
                     .path("/")
-                    .domain("backend-stocksmanagement.onrender.com") // Set your production domain
                     .maxAge(Duration.ofHours(24))
                     .build();
 
