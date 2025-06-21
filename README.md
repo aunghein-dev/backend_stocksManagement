@@ -9,6 +9,7 @@ This is a Spring Boot REST API for managing stocks, checkouts, users, and dashbo
 - Spring Security (JWT)
 - Supabase Integration
 - Docker & Docker Compose
+- Cloud PostgreSQL
 
 ## 🐳 Docker Setup
 
