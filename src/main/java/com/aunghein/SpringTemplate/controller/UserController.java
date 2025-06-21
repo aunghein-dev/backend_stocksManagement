@@ -123,7 +123,6 @@ public class UserController {
                     .sameSite("None")
                     .path("/")
                     .maxAge(Duration.ofHours(24))
-                    .domain(".ngrok-free.app") // Add your ngrok domain
                     .build();
 
 
