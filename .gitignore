@@ -1,14 +1,23 @@
-# Maven & Java
-/target
+# .gitignore
+# Java
 *.class
-*.jar
-*.log
 
-# IDE & OS
+# Maven
+target/
+.m2/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
 .idea/
+.vscode/
 *.iml
+.project
+.classpath
+.settings/
+
+# OS specific
 .DS_Store
+Thumbs.db
 
-# Secrets
+# Environment variables - CRITICAL FOR SECURITY
 .env
-
