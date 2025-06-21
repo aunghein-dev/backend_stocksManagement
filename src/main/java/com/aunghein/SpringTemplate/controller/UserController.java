@@ -119,7 +119,7 @@ public class UserController {
 
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
-                    .secure(false)  // ONLY in dev
+                    .secure(true)  // ONLY in dev
                     .sameSite("None") // or "Lax", depending on frontend/backend domains
                     .path("/")
                     .maxAge(Duration.ofHours(24))

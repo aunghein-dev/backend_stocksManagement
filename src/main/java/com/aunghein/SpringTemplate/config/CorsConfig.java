@@ -16,9 +16,7 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // For local development:
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://frontend-domain.com"));
-        // For deployed frontend:
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // Use this instead of setAllowedOrigins
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true); // <--- **THIS IS CRITICAL for cookies/session**
