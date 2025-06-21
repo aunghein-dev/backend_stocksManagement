@@ -1,5 +1,5 @@
 # Stage 1: Build the Spring Boot application
-FROM openjdk:21-jdk-alpine AS builder # CHANGE THIS LINE TO 21
+FROM openjdk:21-jdk-alpine AS builder
 WORKDIR /app
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
@@ -9,7 +9,7 @@ COPY src ./src
 RUN ./mvnw clean install -DskipTests
 
 # Stage 2: Create the final, lightweight runtime image
-FROM openjdk:21-jdk-alpine # CHANGE THIS LINE TO 21
+FROM openjdk:21-jdk-alpine
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8080
