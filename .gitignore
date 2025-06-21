@@ -1,10 +1,14 @@
+# Maven & Java
 /target
 *.class
-*.log
-*.iml
 *.jar
+*.log
+
+# IDE & OS
 .idea/
+*.iml
 .DS_Store
+
+# Secrets
 .env
-docker-compose.yml
 
