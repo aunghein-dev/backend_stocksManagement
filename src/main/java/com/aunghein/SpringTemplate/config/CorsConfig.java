@@ -17,7 +17,6 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(Arrays.asList(
-                "https://f196-51-79-156-236.ngrok-free.app",
                 "http://localhost:3000"
         ));
 
