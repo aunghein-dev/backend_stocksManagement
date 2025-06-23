@@ -120,8 +120,9 @@ public class UserController {
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
                     .secure(true)
-                    .sameSite("None")
+                    .sameSite("None") // REQUIRED for cross-domain cookies
                     .path("/")
+                    .domain("openwaremyanmar.site") // MUST be the root domain
                     .maxAge(Duration.ofHours(24))
                     .build();
 
