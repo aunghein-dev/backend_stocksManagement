@@ -144,13 +144,19 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("token", "")
-                .path("/")
                 .httpOnly(true)
-                .maxAge(0)  // expire immediately
+                .secure(true) // Match the original
+                .sameSite("None") // Match the original
+                .path("/") // Match the original
+                .domain("openwaremyanmar.site") // Match the original
+                .maxAge(0) // Expire immediately
                 .build();
+
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
         return ResponseEntity.ok("Logged out successfully");
     }
+
 
 
     @GetMapping("/info")
