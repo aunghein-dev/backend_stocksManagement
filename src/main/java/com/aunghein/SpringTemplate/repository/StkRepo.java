@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface StkRepo extends JpaRepository<StkGroup, Long> {
 
-    @Query(value = "SELECT * FROM stk_group WHERE business_id = :businessId", nativeQuery = true)
+    @Query(value = "SELECT * FROM stk_group WHERE business_id = :businessId ORDER BY released_date DESC", nativeQuery = true)
     List<StkGroup> findStkGroupByBusinessId(@Param("businessId") Long businessId);
 
 

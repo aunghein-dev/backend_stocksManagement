@@ -110,29 +110,6 @@ public class StkService{
         }
     }
 
-
-//    // ✅ UPDATE group and replace all items
-//    public StkGroup editByBusiness_BusinessIdWithGroupId(Long groupId, StkGroup updatedGroupData) {
-//        StkGroup existingGroup = stkRepo.findById(groupId)
-//                .orElseThrow(() -> new EntityNotFoundException("Group not found"));
-//
-//        existingGroup.setGroupName(updatedGroupData.getGroupName());
-//        existingGroup.setGroupUnitPrice(updatedGroupData.getGroupUnitPrice());
-//        existingGroup.setReleasedDate(updatedGroupData.getReleasedDate());
-//        existingGroup.setGroupImage(updatedGroupData.getGroupImage());
-//
-//        // Clear and re-add items while keeping parent-child link
-//        existingGroup.getItems().clear();
-//        for (StkItem item : updatedGroupData.getItems()) {
-//            item.setStkGroup(existingGroup);
-//            existingGroup.getItems().add(item);
-//        }
-//
-//        stkRepo.save(existingGroup);
-//        return existingGroup;
-//    }
-//
-//
 @Transactional
 public StkGroup editByBusiness_BusinessIdWithGroupId(
         Long groupId,

@@ -111,7 +111,7 @@ public class UserController {
     }
 
 
-
+    @CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Users user, HttpServletResponse response) {
         try {
