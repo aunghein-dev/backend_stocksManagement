@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -69,46 +70,6 @@ public class UserController {
     }
 
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(
-            @RequestParam("businessName") String businessName,
-            @RequestParam("fullname") String fullname,
-            @RequestParam("username") String username,
-            @RequestParam("password") String password,
-            @RequestParam("agree") boolean agree,
-            @RequestParam("businessLogo") String businessLogo
-    ) {
-        try {
-
-            // Construct business entity
-            Business newBusiness = new Business();
-            newBusiness.setBusinessName(businessName);
-            newBusiness.setBusinessLogo(businessLogo);
-            newBusiness.setRegisteredAt(new Date());
-            newBusiness.setRegisteredBy(username);
-
-            // Construct user entity
-            Users newUser = new Users();
-            newUser.setUsername(username);
-            newUser.setPassword(password);
-            newUser.setRole("Default");
-
-            // Save both
-            Object result = service.signupBusiness(newUser, newBusiness);
-
-            return ResponseEntity.ok(Map.of(
-                    "message", "Signup successful",
-                    "data", result
-            ));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error during signup"));
-        }
-    }
-
-
     @CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Users user, HttpServletResponse response) {
@@ -123,7 +84,6 @@ public class UserController {
                     .domain("openwaremyanmar.site") // MUST be the root domain
                     .maxAge(Duration.ofHours(24))
                     .build();
-
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
@@ -150,7 +110,6 @@ public class UserController {
                 .domain("openwaremyanmar.site") // Match the original
                 .maxAge(0) // Expire immediately
                 .build();
-
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 

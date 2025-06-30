@@ -58,25 +58,7 @@ public class UserService {
         return authentication.isAuthenticated()? jwtService.generateToken(user.getUsername()) : "fail";
     }
 
-    @Transactional
-    public Object signupBusiness(Users newUser, Business newBusiness) {
-        // Save business first (to get ID)
-        newBusiness.setRegisteredBy(newUser.getUsername());
-        if(newBusiness.getBusinessNameShortForm().isEmpty()){
-            newBusiness.setBusinessNameShortForm("Openware");
-        }
-        Business savedBusiness = businessRepo.save(newBusiness);
 
-        // Set business entity in user (not ID!)
-        newUser.setBusiness(savedBusiness);
-        newUser.setPassword(encoder.encode(newUser.getPassword()));
-        Users savedUser = userRepo.save(newUser);
-
-        return Map.of(
-                "user", savedUser,
-                "business", savedBusiness
-        );
-    }
 
     @Transactional
     public String editUserImage(Long userId, MultipartFile profilePicture) {
@@ -140,6 +122,8 @@ public class UserService {
 
         // 2. Save the new Business entity first
         newBusiness.setBusinessLogo(null); // Assuming logo handled separately or defaulted
+        newBusiness.setRegisteredBy(newUser.getUsername());
+        newBusiness.setBusinessNameShortForm(null);
         Business savedBusiness = businessRepo.save(newBusiness); // Save and get the object with the generated ID
 
         // 3. Assign the saved Business to the new User
