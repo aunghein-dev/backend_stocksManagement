@@ -61,6 +61,10 @@ public class UserService {
     @Transactional
     public Object signupBusiness(Users newUser, Business newBusiness) {
         // Save business first (to get ID)
+        newBusiness.setRegisteredBy(newUser.getUsername());
+        if(newBusiness.getBusinessNameShortForm().isEmpty()){
+            newBusiness.setBusinessNameShortForm("Openware");
+        }
         Business savedBusiness = businessRepo.save(newBusiness);
 
         // Set business entity in user (not ID!)

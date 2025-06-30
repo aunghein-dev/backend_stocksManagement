@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -81,7 +80,6 @@ public class UserController {
     ) {
         try {
 
-
             // Construct business entity
             Business newBusiness = new Business();
             newBusiness.setBusinessName(businessName);
@@ -126,6 +124,7 @@ public class UserController {
                     .maxAge(Duration.ofHours(24))
                     .build();
 
+
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
             return ResponseEntity.ok(Map.of("message", "Login successful"));
@@ -151,6 +150,7 @@ public class UserController {
                 .domain("openwaremyanmar.site") // Match the original
                 .maxAge(0) // Expire immediately
                 .build();
+
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
