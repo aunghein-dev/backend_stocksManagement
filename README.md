@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/onlylogo.png" alt="Openware Logo" width="180"/>
+  <img src="https://github.com/aunghein-dev/frontend_stocksManagement/blob/main/public/onlylogo.png?raw=true" alt="Openware Logo" width="100"/>
 </p>
 
 # Openware Stock Manager - Backend
