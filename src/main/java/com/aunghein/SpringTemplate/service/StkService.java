@@ -110,110 +110,163 @@ public class StkService{
         }
     }
 
-@Transactional
-public StkGroup editByBusiness_BusinessIdWithGroupId(
-        Long groupId,
-        StkGroup updatedGroupData,
-        MultipartFile groupImage,
-        List<MultipartFile> itemImages
-) {
-    // 1) Fetch existing group
-    StkGroup existingGroup = stkRepo.findById(groupId)
-            .orElseThrow(() -> new EntityNotFoundException("Group not found"));
+    @Transactional
+    public StkGroup editByBusiness_BusinessIdWithGroupId(
+            Long groupId,
+            StkGroup updatedGroupData,
+            MultipartFile groupImage,
+            // CHANGE 1: Receive all item images as a map or individual files,
+            // assuming your frontend sends them with distinct names like "itemImage_ID.jpg" or "itemImage_new_INDEX.jpg"
+            // For simplicity, let's process the raw MultipartHttpServletRequest or iterate over parameter names.
+            // A more Spring-friendly way is to adjust the DTO or use @RequestParam Map<String, MultipartFile>
+            // But given your frontend sends "itemImages", we'll iterate the request.
+            // For this example, let's assume `itemImages` passed here will contain ALL files,
+            // and we'll map them by their original filenames if possible or rely on the frontend's naming convention.
+            // **Best practice is to change the controller to accept Map<String, MultipartFile> if possible.**
+            // For now, let's adapt to your existing `List<MultipartFile>`.
+            List<MultipartFile> itemImages // Keep this for now, but internally map by name
+    ) {
+        // 1) Fetch existing group
+        StkGroup existingGroup = stkRepo.findById(groupId)
+                .orElseThrow(() -> new EntityNotFoundException("Group not found"));
 
-    // 2) Update scalar fields
-    existingGroup.setGroupName(updatedGroupData.getGroupName());
-    existingGroup.setGroupUnitPrice(updatedGroupData.getGroupUnitPrice());
-    existingGroup.setReleasedDate(updatedGroupData.getReleasedDate());
+        // 2) Update scalar fields
+        existingGroup.setGroupName(updatedGroupData.getGroupName());
+        existingGroup.setGroupUnitPrice(updatedGroupData.getGroupUnitPrice());
+        existingGroup.setReleasedDate(updatedGroupData.getReleasedDate());
 
-    // 3) Replace group image (delete old one first)
-    if (groupImage != null && !groupImage.isEmpty()) {
-        String oldGroupImage = existingGroup.getGroupImage();
-        if (oldGroupImage != null) {
-            supabaseService.deleteFile(oldGroupImage);
-        }
-        try {
-            String newGroupImageUrl = supabaseService.uploadGroupImage(groupImage);
-            existingGroup.setGroupImage(newGroupImageUrl);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to upload group image", e);
-        }
-    }
-
-    // 4) Handle items
-    List<StkItem> updatedItems = updatedGroupData.getItems() != null
-            ? updatedGroupData.getItems()
-            : Collections.emptyList();
-    List<StkItem> existingItems = new ArrayList<>(existingGroup.getItems());
-
-    Map<Long, StkItem> updatedById = updatedItems.stream()
-            .filter(item -> item.getItemId() != null)
-            .collect(Collectors.toMap(StkItem::getItemId, item -> item));
-
-    // 4a) Delete old items not present in updated list
-    Iterator<StkItem> iter = existingItems.iterator();
-    while (iter.hasNext()) {
-        StkItem oldItem = iter.next();
-        if (oldItem.getItemId() == null || !updatedById.containsKey(oldItem.getItemId())) {
-            if (oldItem.getItemImage() != null) {
-                supabaseService.deleteFile(oldItem.getItemImage());
+        // 3) Replace group image (delete old one first)
+        if (groupImage != null && !groupImage.isEmpty()) {
+            String oldGroupImage = existingGroup.getGroupImage();
+            if (oldGroupImage != null) {
+                supabaseService.deleteFile(oldGroupImage);
             }
-            iter.remove();
-            existingGroup.removeItem(oldItem);
+            try {
+                String newGroupImageUrl = supabaseService.uploadGroupImage(groupImage);
+                existingGroup.setGroupImage(newGroupImageUrl);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to upload group image", e);
+            }
         }
-    }
 
-    // 4b) Add/update items
-    for (int i = 0; i < updatedItems.size(); i++) {
-        StkItem updatedItem = updatedItems.get(i);
-        Long id = updatedItem.getItemId();
+        // 4) Handle items
+        List<StkItem> updatedItems = updatedGroupData.getItems() != null
+                ? updatedGroupData.getItems()
+                : Collections.emptyList();
+        List<StkItem> existingItems = new ArrayList<>(existingGroup.getItems());
 
-        if (id != null) {
-            // Update existing item
-            StkItem target = existingItems.stream()
-                    .filter(e -> id.equals(e.getItemId()))
-                    .findFirst()
-                    .orElse(null);
-            if (target != null) {
-                target.setItemQuantity(updatedItem.getItemQuantity());
-                target.setItemColorHex(updatedItem.getItemColorHex());
+        // NEW LOGIC: Map incoming item images by the unique part of their filename
+        // Assuming frontend sends filenames like "itemImage_NEW_0.jpg", "itemImage_123.jpg" etc.
+        // The name you append as "itemImage_${item.itemId || 'new_' + index}.jpg" is the crucial part.
+        Map<String, MultipartFile> incomingItemImageMap = new HashMap<>();
+        if (itemImages != null) {
+            for (MultipartFile file : itemImages) {
+                // Use getOriginalFilename() if the frontend sets it appropriately,
+                // otherwise, you need to find a way to map it.
+                // Given your frontend, `getOriginalFilename()` likely contains the full name
+                // you set, e.g., "itemImage_123.jpg" or "itemImage_new_0.jpg".
+                if (file.getOriginalFilename() != null && !file.isEmpty()) {
+                    incomingItemImageMap.put(file.getOriginalFilename(), file);
+                }
+            }
+        }
 
-                if (itemImages != null && i < itemImages.size() && !itemImages.get(i).isEmpty()) {
-                    if (target.getItemImage() != null) {
+
+        Map<Long, StkItem> updatedById = updatedItems.stream()
+                .filter(item -> item.getItemId() != null)
+                .collect(Collectors.toMap(StkItem::getItemId, item -> item));
+
+        // 4a) Delete old items not present in updated list
+        // Use a temporary list to avoid ConcurrentModificationException
+        List<StkItem> itemsToRemove = new ArrayList<>();
+        for (StkItem oldItem : existingItems) {
+            if (oldItem.getItemId() == null || !updatedById.containsKey(oldItem.getItemId())) {
+                // This item is no longer in the updated list
+                if (oldItem.getItemImage() != null) {
+                    supabaseService.deleteFile(oldItem.getItemImage());
+                }
+                itemsToRemove.add(oldItem);
+            }
+        }
+        existingItems.removeAll(itemsToRemove);
+        existingGroup.getItems().removeAll(itemsToRemove); // Ensure collection is updated
+
+        // 4b) Add/update items
+        for (int i = 0; i < updatedItems.size(); i++) {
+            StkItem updatedItem = updatedItems.get(i);
+            Long id = updatedItem.getItemId();
+
+            // Determine the expected filename for the image for this specific item
+            // This MUST match how your frontend names the files when appending to FormData.
+            String expectedImageFileName = updatedItem.getItemId() != null
+                    ? "itemImage_" + updatedItem.getItemId() + ".jpg" // For existing items
+                    : "itemImage_new_" + i + ".jpg"; // For new items (using index from frontend)
+
+            MultipartFile itemImageFile = incomingItemImageMap.get(expectedImageFileName);
+            boolean hasNewImage = itemImageFile != null && !itemImageFile.isEmpty();
+
+
+            if (id != null) {
+                // Update existing item
+                StkItem target = existingItems.stream()
+                        .filter(e -> id.equals(e.getItemId()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (target != null) {
+                    target.setItemQuantity(updatedItem.getItemQuantity());
+                    target.setItemColorHex(updatedItem.getItemColorHex());
+
+                    // Only update image if a NEW image file is provided for this specific item
+                    if (hasNewImage) {
+                        if (target.getItemImage() != null) {
+                            supabaseService.deleteFile(target.getItemImage());
+                        }
+                        try {
+                            String newItemImageUrl = supabaseService.uploadItemImage(itemImageFile);
+                            target.setItemImage(newItemImageUrl);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to upload item image for existing item " + id, e);
+                        }
+                    }
+                    // If itemImageFile is null/empty AND item.itemImage is null, it means the image was removed by frontend.
+                    // In your frontend, if `_tempFile` is null and `itemImage` becomes null, it signifies removal.
+                    // Your current frontend doesn't explicitly send a "delete image" signal for an existing image if
+                    // `_tempFile` is null and `itemImage` is also null for an existing item.
+                    // If `item.itemImage` from `updatedGroupData` is null, and `hasNewImage` is false, it implies removal.
+                    // Your frontend logic for `itemsPayload` only sends `item.itemImage` if `_isExistingImage` is true and `item.itemImage` exists.
+                    // This means if `_tempFile` is null and `item.itemImage` is null, `itemImage` will be undefined in the payload.
+                    // So, if `item.itemImage` is missing from the payload for an existing item, it means it was removed.
+                    if (!hasNewImage && updatedItem.getItemImage() == null && target.getItemImage() != null) {
                         supabaseService.deleteFile(target.getItemImage());
+                        target.setItemImage(null);
                     }
+
+                }
+            } else {
+                // Add new item
+                StkItem newItem = new StkItem();
+                newItem.setItemQuantity(updatedItem.getItemQuantity());
+                newItem.setItemColorHex(updatedItem.getItemColorHex());
+                newItem.setStkGroup(existingGroup); // Link to the group
+
+                // Only upload image if a new image file is provided for this specific new item
+                if (hasNewImage) {
                     try {
-                        String newItemImageUrl = supabaseService.uploadItemImage(itemImages.get(i));
-                        target.setItemImage(newItemImageUrl);
+                        String newItemImageUrl = supabaseService.uploadItemImage(itemImageFile);
+                        newItem.setItemImage(newItemImageUrl);
                     } catch (Exception e) {
-                        throw new RuntimeException("Failed to upload item image", e);
+                        throw new RuntimeException("Failed to upload new item image for new item " + i, e);
                     }
                 }
-            }
-        } else {
-            // Add new item
-            StkItem newItem = new StkItem();
-            newItem.setItemQuantity(updatedItem.getItemQuantity());
-            newItem.setItemColorHex(updatedItem.getItemColorHex());
-            newItem.setStkGroup(existingGroup);
 
-            if (itemImages != null && i < itemImages.size() && !itemImages.get(i).isEmpty()) {
-                try {
-                    String newItemImageUrl = supabaseService.uploadItemImage(itemImages.get(i));
-                    newItem.setItemImage(newItemImageUrl);
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to upload new item image", e);
-                }
+                existingGroup.addItem(newItem); // Add to the group's collection
             }
-
-            existingGroup.addItem(newItem);
         }
+
+        // 5) Save and return
+        return stkRepo.save(existingGroup);
     }
-
-    // 5) Save and return
-    return stkRepo.save(existingGroup);
-}
-
 
 
 
