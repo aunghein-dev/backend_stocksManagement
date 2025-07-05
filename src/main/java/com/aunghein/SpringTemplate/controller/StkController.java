@@ -101,6 +101,7 @@ public class StkController {
     @DeleteMapping("/delete/stkItem/{groupId}/{itemId}")
     public ResponseEntity<?> deleteItemOnlyByItemId(@PathVariable Long itemId,
                                                     @PathVariable Long groupId){
+
         return ResponseEntity.ok(service.deleteItemOnlyByItemId(itemId, groupId));
     }
 

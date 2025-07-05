@@ -319,8 +319,17 @@ public class StkService{
             StkGroup groupToDelete = stkRepo.findById(groupId)
                     .orElseThrow(() -> new NoResourceFoundException("Group not found with ID: " + groupId));
             String toDeleteImgUrl = groupToDelete.getGroupImage();
-            if(toDeleteImgUrl.startsWith("https://svmeynesalueoxzhtdqp.supabase.co")){
-                supabaseService.deleteFile(toDeleteImgUrl);
+            // **FIX:** Add null check for toDeleteImgUrl
+            if (toDeleteImgUrl != null && toDeleteImgUrl.startsWith("https://svmeynesalueoxzhtdqp.supabase.co")) {
+                try {
+                    supabaseService.deleteFile(toDeleteItem.getItemImage());
+                    log.info("Successfully triggered deletion for image: {}", toDeleteItem.getItemImage());
+                } catch (Exception e) {
+                    log.error("Failed to delete image from Supabase: {}", toDeleteItem.getItemImage(), e);
+                }
+
+            } else {
+                log.info("Group {} does not have a Supabase uploaded image or image URL is null.", groupId);
             }
             stkRepo.delete(groupToDelete);
         }

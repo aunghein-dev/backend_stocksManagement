@@ -68,28 +68,33 @@ public class SupabaseService {
         return uploadFile(file, "profilePictures/");
     }
 
-    @Transactional
     public void deleteFile(String publicUrl) {
-        // Remove base URL and get object path
         String basePath = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/";
         if (!publicUrl.startsWith(basePath)) {
             throw new IllegalArgumentException("Invalid public URL: " + publicUrl);
         }
 
-        String objectPath = publicUrl.replace(basePath, "");
+        String fileName = publicUrl.substring(basePath.length());
+        String objectPath = "public/" + BUCKET + "/" + fileName;
 
         WebClient.builder()
                 .baseUrl(SUPABASE_URL)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + SUPABASE_KEY)
                 .build()
                 .delete()
-                .uri("/storage/v1/object/" + BUCKET + "/" + objectPath)
+                .uri("/storage/v1/object/" + objectPath)
                 .retrieve()
                 .onStatus(status -> !status.is2xxSuccessful(), res ->
-                        res.bodyToMono(String.class)
-                                .flatMap(err -> Mono.error(new RuntimeException("Supabase delete failed: " + err)))
+                        res.bodyToMono(String.class).flatMap(err -> {
+                            // Only suppress 404
+                            if (err.contains("\"statusCode\":\"404\"")) {
+                                return Mono.empty(); // Silently ignore not found
+                            }
+                            return Mono.error(new RuntimeException("Supabase delete failed: " + err));
+                        })
                 )
                 .toBodilessEntity()
                 .block();
     }
+
 }
