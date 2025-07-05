@@ -46,16 +46,30 @@ public class StkService{
     public List<StkGroup> getStkGroupByBizNonZeroItems(Long bizId) {
         List<StkGroup> groups = stkRepo.findStkGroupByBusinessId(bizId);
 
+        // Split into two lists: one with non-empty items, one with empty items (after filtering)
+        List<StkGroup> nonEmptyGroups = new ArrayList<>();
+        List<StkGroup> emptyGroups = new ArrayList<>();
+
         for (StkGroup group : groups) {
-            group.setItems(
-                    group.getItems().stream()
-                            .filter(item -> item.getItemQuantity() > 0)
-                            .collect(Collectors.toList())
-            );
+            List<StkItem> filteredItems = group.getItems().stream()
+                    .filter(item -> item.getItemQuantity() > 0)
+                    .sorted(Comparator.comparingInt(StkItem::getItemQuantity).reversed())
+                    .collect(Collectors.toList());
+
+            group.setItems(filteredItems);
+
+            if (filteredItems.isEmpty()) {
+                emptyGroups.add(group); // group now has no items
+            } else {
+                nonEmptyGroups.add(group); // group still has items
+            }
         }
 
-        return  groups;
+        // Combine non-empty groups first, then empty groups at the end
+        nonEmptyGroups.addAll(emptyGroups);
+        return nonEmptyGroups;
     }
+
 
 
     // Pagination
