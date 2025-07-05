@@ -47,6 +47,12 @@ public class StkController {
         return service.getStkGroupByBusinessId(bizId);
     }
 
+    //By Group Filter Non-Zero Qty
+    @GetMapping("/stkG/biz/nonZero/{bizId}")
+    public List<StkGroup> getStkGroupByBizNonZeroItems(@PathVariable Long bizId) {
+        return service.getStkGroupByBizNonZeroItems(bizId);
+    }
+
     @GetMapping("/biz/{bizId}/stkG/{groupId}")
     public Optional<StkGroup> getStkGroupByGroupId(@PathVariable Long groupId,
                                                    @PathVariable Long bizId){

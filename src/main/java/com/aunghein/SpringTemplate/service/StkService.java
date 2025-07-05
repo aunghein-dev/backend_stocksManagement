@@ -43,6 +43,18 @@ public class StkService{
         return stkRepo.findStkGroupByBusinessId(bizId);
     }
 
+    public List<StkGroup> getStkGroupByBizNonZeroItems(Long bizId) {
+        List<StkGroup> lists = stkRepo.findStkGroupByBusinessId(bizId);
+
+        return lists.stream()
+                .filter(group ->
+                        group.getItems() != null &&
+                                group.getItems().stream().anyMatch(item -> item.getItemQuantity() != 0)
+                )
+                .collect(Collectors.toList());
+    }
+
+
     // Pagination
     public Page<StkGroup> getStkGroupsByBusinessId(Long bizId, Pageable pageable) {
         return stkRepo.findByBusinessId(bizId, pageable);
