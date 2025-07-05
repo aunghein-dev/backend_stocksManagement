@@ -44,14 +44,17 @@ public class StkService{
     }
 
     public List<StkGroup> getStkGroupByBizNonZeroItems(Long bizId) {
-        List<StkGroup> lists = stkRepo.findStkGroupByBusinessId(bizId);
+        List<StkGroup> groups = stkRepo.findStkGroupByBusinessId(bizId);
 
-        return lists.stream()
-                .filter(group ->
-                        group.getItems() != null &&
-                                group.getItems().stream().anyMatch(item -> item.getItemQuantity() != 0)
-                )
-                .collect(Collectors.toList());
+        for (StkGroup group : groups) {
+            group.setItems(
+                    group.getItems().stream()
+                            .filter(item -> item.getItemQuantity() > 0)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return  groups;
     }
 
 
