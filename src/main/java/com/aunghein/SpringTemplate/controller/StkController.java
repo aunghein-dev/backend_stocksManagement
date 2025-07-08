@@ -93,7 +93,7 @@ public class StkController {
     }
 
 
-    @CrossOrigin
+
     @PutMapping(value = "/edit/stkG/{groupId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StkGroup> editStkGroup(@PathVariable Long groupId,
                                                  @RequestPart("json") StkGroup stkGroup,

@@ -245,6 +245,7 @@ public class StkService{
                 if (target != null) {
                     target.setItemQuantity(updatedItem.getItemQuantity());
                     target.setItemColorHex(updatedItem.getItemColorHex());
+                    target.setBarcodeNo(updatedItem.getBarcodeNo());
 
                     // Only update image if a NEW image file is provided for this specific item
                     if (hasNewImage) {
@@ -277,6 +278,7 @@ public class StkService{
                 StkItem newItem = new StkItem();
                 newItem.setItemQuantity(updatedItem.getItemQuantity());
                 newItem.setItemColorHex(updatedItem.getItemColorHex());
+                newItem.setBarcodeNo(updatedItem.getBarcodeNo());
                 newItem.setStkGroup(existingGroup); // Link to the group
 
                 // Only upload image if a new image file is provided for this specific new item

@@ -16,6 +16,7 @@ public class StkItem {
 
     private String itemColorHex;
     private int itemQuantity;
+    private String barcodeNo;
 
     @ManyToOne
     @JoinColumn(name = "group_id", nullable = false)
@@ -25,11 +26,12 @@ public class StkItem {
     public StkItem() {
     }
 
-    public StkItem(Long itemId, String itemImage, String itemColorHex, int itemQuantity, StkGroup stkGroup) {
+    public StkItem(Long itemId, String itemImage, String itemColorHex, int itemQuantity, String barcodeNo, StkGroup stkGroup) {
         this.itemId = itemId;
         this.itemImage = itemImage;
         this.itemColorHex = itemColorHex;
         this.itemQuantity = itemQuantity;
+        this.barcodeNo = barcodeNo;
         this.stkGroup = stkGroup;
     }
 
@@ -73,6 +75,15 @@ public class StkItem {
         this.stkGroup = stkGroup;
     }
 
+    public String getBarcodeNo() {
+        return barcodeNo;
+    }
+
+    public void setBarcodeNo(String barcodeNo) {
+        this.barcodeNo = barcodeNo;
+    }
+
+
     @Override
     public String toString() {
         return "StkItem{" +
@@ -80,7 +91,8 @@ public class StkItem {
                 ", itemImage='" + itemImage + '\'' +
                 ", itemColorHex='" + itemColorHex + '\'' +
                 ", itemQuantity=" + itemQuantity +
+                ", barcodeNo='" + barcodeNo + '\'' +
+                ", stkGroup=" + stkGroup +
                 '}';
     }
-
 }
