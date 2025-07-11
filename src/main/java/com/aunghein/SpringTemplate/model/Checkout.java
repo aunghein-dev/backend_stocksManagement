@@ -22,6 +22,8 @@ public class Checkout {
     private float subCheckout;
     private String tranUserEmail;
     private Long bizId;
+    private String barcodeNo;
+
 
     public Checkout() {
         // Required by JPA

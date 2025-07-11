@@ -73,6 +73,10 @@ public class CheckoutService {
         return "Checkout completed for " + checkoutList.size() + " items.";
     }
 
+    public void setBarcode(){
+
+    }
+
 
     public List<Checkout> getCheckOut(Long bizId) {
         return checkoutRepo.findCheckoutByBizId(bizId);
