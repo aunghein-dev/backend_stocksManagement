@@ -28,6 +28,10 @@ public class StkController {
     @Autowired
     private BusinessRepo businessRepo;
 
+    @GetMapping("/health")
+    public String healthCheck() {
+        return "OK";
+    }
 
     // Pagination
     @GetMapping("/stkG/biz/{bizId}/page")
