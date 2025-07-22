@@ -1,0 +1,23 @@
+# .gitignore
+# Java
+*.class
+
+# Maven
+target/
+.m2/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Environment variables - CRITICAL FOR SECURITY
+.env
