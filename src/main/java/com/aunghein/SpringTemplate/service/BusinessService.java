@@ -22,7 +22,7 @@ public class BusinessService {
     private SupabaseService supabaseService;
 
     public Business getBizInfoByEmail(String email) {
-      return businessRepo.findBizByEmail(email);
+      return businessRepo.findBusinessByUsername(email);
     }
 
     @Transactional

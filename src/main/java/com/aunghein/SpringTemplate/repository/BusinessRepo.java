@@ -7,6 +7,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface BusinessRepo extends JpaRepository<Business, Long> {
 
-    @Query(value = "SELECT * FROM business WHERE registered_by = :email", nativeQuery = true)
-    Business findBizByEmail(@Param("email") String email);
+    @Query(
+            value = "SELECT * FROM business WHERE business_id = (" +
+                    "SELECT business_id FROM users WHERE username = :username)",
+            nativeQuery = true
+    )
+    Business findBusinessByUsername(@Param("username") String username);
+
 }
