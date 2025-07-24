@@ -29,9 +29,20 @@ public class StkController {
     private BusinessRepo businessRepo;
 
     @GetMapping("/health")
-    public String healthCheck() {
-        return "OK";
-    }
+    public ResponseEntity<String> safeCronTask() {
+    try {
+        // ✅ Warm-up delay — give time for app to fully boot
+        Thread.sleep(2000); // 2s is usually enough
+
+        // ✅ Then run actual logic (fetch DB, call APIs, etc.)
+        System.out.println("✅ Cron task started: " + LocalDateTime.now());
+
+        return ResponseEntity.ok("✅ Task completed");
+        } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("❌ Task failed");
+       }
+     }
 
     // Pagination
     @GetMapping("/stkG/biz/{bizId}/page")
