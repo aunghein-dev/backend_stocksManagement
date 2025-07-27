@@ -70,18 +70,18 @@ public class UserController {
     }
 
 
-    @CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
+    //@CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Users user, HttpServletResponse response) {
         try {
             String token = service.verify(user);
 
             ResponseCookie cookie = ResponseCookie.from("token", token)
-                    .httpOnly(true)
-                    .secure(true)
-                    .sameSite("None") // REQUIRED for cross-domain cookies
+                    .httpOnly(false)
+                    .secure(false)
+                    .sameSite("Lax") // REQUIRED for cross-domain cookies
                     .path("/")
-                    .domain("openwaremyanmar.site") // MUST be the root domain
+                    //.domain("openwaremyanmar.site") // MUST be the root domain
                     .maxAge(Duration.ofHours(24))
                     .build();
 
@@ -103,11 +103,11 @@ public class UserController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("token", "")
-                .httpOnly(true)
-                .secure(true) // Match the original
-                .sameSite("None") // Match the original
+                .httpOnly(false)
+                .secure(false) // Match the original
+                .sameSite("Lax") // Match the original
                 .path("/") // Match the original
-                .domain("openwaremyanmar.site") // Match the original
+                //.domain("openwaremyanmar.site") // Match the original
                 .maxAge(0) // Expire immediately
                 .build();
 

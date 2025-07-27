@@ -18,7 +18,7 @@ public class CorsConfig {
 
         configuration.setAllowedOrigins(Arrays.asList(
                 "https://app.openwaremyanmar.site",
-                "http://localhost:3001"
+                "http://localhost:3000"
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
