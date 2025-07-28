@@ -21,6 +21,7 @@ public class Invoice {
     private Long rowId;
 
     private String bizName;
+    private Long bizId;
     private String billingAcc;
     private Date billedDate;
     private Date issueDate;
@@ -31,5 +32,6 @@ public class Invoice {
     private String tranProvider;
     private String tranHistId;
     private String planCode;
+    private String planName;
     private String billedBy;
 }
