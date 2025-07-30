@@ -6,11 +6,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableJpaRepositories(basePackages = "com.aunghein.SpringTemplate.repository")
 @EntityScan(basePackages = "com.aunghein.SpringTemplate.model")
 @EnableRetry
+@EnableScheduling
 public class SpringTemplateApplication {
 
 	public static void main(String[] args) {

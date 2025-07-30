@@ -45,9 +45,9 @@ public class SupabaseService {
      * @throws Exception if the upload fails after all retries.
      */
     @Retryable(
-            value = { WebClientRequestException.class, IOException.class }, // Retry on these exceptions
-            maxAttempts = 3, // Try up to 3 times (initial attempt + 2 retries)
-            backoff = @Backoff(delay = 1000, multiplier = 2) // Wait 1 second, then 2 seconds, then 4 seconds before retrying
+            retryFor = { WebClientRequestException.class, IOException.class },
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2)
     )
     public String uploadFile(MultipartFile file, String folderPath) throws Exception {
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
