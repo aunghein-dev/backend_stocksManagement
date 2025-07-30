@@ -32,8 +32,7 @@ public class SupabaseMediaService {
     @Value("${supabase.bucket}")
     private String BUCKET;
 
-    private final WebClient webClient = WebClient.builder().build();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
 
     @Scheduled(cron = "0 0 2 * * ?") // Runs daily at 2 AM
     public void autoDeleteOrphanedFiles() {
@@ -93,6 +92,8 @@ public class SupabaseMediaService {
      */
     public List<String> listFiles(String folderPath) throws Exception {
         // Ensure folderPath ends with slash
+        WebClient webClient = WebClient.builder().build();
+        ObjectMapper objectMapper = new ObjectMapper();
         String prefix = folderPath.endsWith("/") ? folderPath : folderPath + "/";
 
         // Make API request
