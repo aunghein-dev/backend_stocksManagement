@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class UserService {
@@ -139,5 +138,11 @@ public class UserService {
 
     public boolean checkUserAlreadyExits(String username) {
         return userRepo.existsByUsername(username);
+    }
+
+    public Users resetPassword(Long id, String newPassword) {
+        Users user = userRepo.findById(id).orElseThrow();
+        user.setPassword(encoder.encode(newPassword));
+        return userRepo.save(user);
     }
 }

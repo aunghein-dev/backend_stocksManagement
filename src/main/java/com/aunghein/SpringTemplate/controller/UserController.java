@@ -2,7 +2,6 @@ package com.aunghein.SpringTemplate.controller;
 
 import com.aunghein.SpringTemplate.controller.Utils.GetTokenFromRequest;
 import com.aunghein.SpringTemplate.model.Business;
-import com.aunghein.SpringTemplate.model.StkGroup;
 import com.aunghein.SpringTemplate.model.Users;
 import com.aunghein.SpringTemplate.repository.UserRepo;
 import com.aunghein.SpringTemplate.service.JWTService;
@@ -17,8 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -33,6 +30,12 @@ public class UserController {
 
     @Autowired
     private UserRepo userRepo;
+
+    @PutMapping("/reset/password/{id}")
+    public ResponseEntity<?> resetPassword(@PathVariable Long id,
+                                           @RequestPart("newPassword") String newPassword) {
+        return ResponseEntity.ok(service.resetPassword(id, newPassword));
+    }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> newUserRegister(@RequestPart("postingUser") Users newUser,
