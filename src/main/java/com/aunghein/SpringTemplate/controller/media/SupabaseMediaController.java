@@ -18,27 +18,27 @@ public class SupabaseMediaController {
     @Value("${media.cleanup.secret}")
     private String cleanupSecret;
 
-    @PostMapping("/run-now/{secret}")
-    public ResponseEntity<String> runCleanupNow(@PathVariable String secret) {
-        if (!secret.equals(cleanupSecret)) {
-            return ResponseEntity.status(403).body("Forbidden");
-        }
-        supabaseMediaService.autoDeleteOrphanedFiles();
-        return ResponseEntity.ok("Cleanup process triggered");
-    }
-
-    @PostMapping("/dry-run/{secret}")
-    public ResponseEntity<List<String>> dryRun(@PathVariable String secret) {
-        if (!secret.equals(cleanupSecret)) {
-            return ResponseEntity.status(403).build();
-        }
-        try {
-            List<String> orphanedFiles = supabaseMediaService.getSupabaseFilesNotInDb();
-            return ResponseEntity.ok(orphanedFiles);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    @PostMapping("/run-now/{secret}")
+//    public ResponseEntity<String> runCleanupNow(@PathVariable String secret) {
+//        if (!secret.equals(cleanupSecret)) {
+//            return ResponseEntity.status(403).body("Forbidden");
+//        }
+//        supabaseMediaService.autoDeleteOrphanedFiles();
+//        return ResponseEntity.ok("Cleanup process triggered");
+//    }
+//
+//    @PostMapping("/dry-run/{secret}")
+//    public ResponseEntity<List<String>> dryRun(@PathVariable String secret) {
+//        if (!secret.equals(cleanupSecret)) {
+//            return ResponseEntity.status(403).build();
+//        }
+//        try {
+//            List<String> orphanedFiles = supabaseMediaService.getSupabaseFilesNotInDb();
+//            return ResponseEntity.ok(orphanedFiles);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     @GetMapping("/openware/media/v0/{secret}")
     public ResponseEntity<List<String>> getSupabaseFilesNotInDb(@PathVariable String secret) throws Exception {

@@ -34,29 +34,29 @@ public class SupabaseMediaService {
 
 
 
-    @Scheduled(cron = "0 0 2 * * ?") // Runs daily at 2 AM
-    public void autoDeleteOrphanedFiles() {
-        try {
-            List<String> orphanedFiles = getSupabaseFilesNotInDb();
-            if (!orphanedFiles.isEmpty()) {
-                System.out.println("Found " + orphanedFiles.size() + " orphaned files to delete");
-
-                for (String fileUrl : orphanedFiles) {
-                    try {
-                        supabaseService.deleteFile(fileUrl);
-                        System.out.println("Deleted: " + fileUrl);
-                    } catch (Exception e) {
-                        System.err.println("Failed to delete " + fileUrl + ": " + e.getMessage());
-                    }
-                }
-            } else {
-                System.out.println("No orphaned files found");
-            }
-        } catch (Exception e) {
-            System.err.println("Error in autoDeleteOrphanedFiles: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+//    @Scheduled(cron = "0 0 2 * * ?") // Runs daily at 2 AM
+//    public void autoDeleteOrphanedFiles() {
+//        try {
+//            List<String> orphanedFiles = getSupabaseFilesNotInDb();
+//            if (!orphanedFiles.isEmpty()) {
+//                System.out.println("Found " + orphanedFiles.size() + " orphaned files to delete");
+//
+//                for (String fileUrl : orphanedFiles) {
+//                    try {
+//                        supabaseService.deleteFile(fileUrl);
+//                        System.out.println("Deleted: " + fileUrl);
+//                    } catch (Exception e) {
+//                        System.err.println("Failed to delete " + fileUrl + ": " + e.getMessage());
+//                    }
+//                }
+//            } else {
+//                System.out.println("No orphaned files found");
+//            }
+//        } catch (Exception e) {
+//            System.err.println("Error in autoDeleteOrphanedFiles: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     public List<String> getSupabaseFilesNotInDb() throws Exception {
        List<String> allSupabase = listAllImages();                  // all public URLs
