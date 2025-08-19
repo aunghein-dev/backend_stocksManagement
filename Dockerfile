@@ -1,16 +1,26 @@
-# Stage 1: Build the Spring Boot application
-FROM alpine/java:21-jdk AS builder
+# ---------- build stage ----------
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline -B
-COPY src ./src
-RUN ./mvnw clean install -DskipTests
 
-# Stage 2: Create the final, lightweight runtime image
-FROM alpine/java:21-jre
+# Cache deps
+COPY pom.xml .
+RUN mvn -q -DskipTests dependency:go-offline
+
+# Build
+COPY src ./src
+RUN mvn -q -DskipTests clean package
+
+# ---------- run stage ----------
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
+
+# Copy Spring Boot fat jar
+COPY --from=build /app/target/*.jar app.jar
+
+# App listens on 8080 inside the container
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Allow optional JVM tuning via JAVA_OPTS (not required)
+ENV JAVA_OPTS=""
+
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
