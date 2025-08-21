@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -31,7 +32,7 @@ public class AdminController {
     public ResponseEntity<?> getAllInvoicesByBizId(@PathVariable Long bizId){
         List<Invoice> allInvoices = invoiceService.getAllInvoicesByBizId(bizId);
         if (allInvoices.isEmpty()){
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(new ArrayList<>());
         }
         return ResponseEntity.ok(allInvoices);
     }

@@ -3,12 +3,15 @@ package com.aunghein.SpringTemplate.controller;
 import com.aunghein.SpringTemplate.controller.Utils.GetTokenFromRequest;
 import com.aunghein.SpringTemplate.model.Business;
 import com.aunghein.SpringTemplate.model.Users;
+import com.aunghein.SpringTemplate.model.dto.StorageResponse;
 import com.aunghein.SpringTemplate.repository.UserRepo;
+import com.aunghein.SpringTemplate.service.BillingService;
+import com.aunghein.SpringTemplate.service.BusinessService;
 import com.aunghein.SpringTemplate.service.JWTService;
 import com.aunghein.SpringTemplate.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
@@ -20,16 +23,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService service;
-
-    @Autowired
-    private JWTService jwtService;
-
-    @Autowired
-    private UserRepo userRepo;
+    private final UserService service;
+    private final JWTService jwtService;
+    private final UserRepo userRepo;
+    private final BusinessService businessService;
+    private final BillingService billingService;
 
     @PutMapping("/reset/password/{id}")
     public ResponseEntity<?> resetPassword(@PathVariable Long id,
@@ -77,25 +78,28 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody Users user, HttpServletResponse response) {
         try {
             String token = service.verify(user);
+            var bizInfo = businessService.getBizInfoByEmail(user.getUsername());
+            Long bizId = (bizInfo != null) ? bizInfo.getBusinessId() : null;
 
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
                     .secure(true)
-                    .sameSite("None") // REQUIRED for cross-domain cookies
+                    .sameSite("None")
                     .path("/")
-                    .domain("openwaremyanmar.site") // MUST be the root domain
-                    .maxAge(Duration.ofHours(24))
+                    .domain("openwaremyanmar.site")
+                    .maxAge(Duration.ofDays(3650))
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-            return ResponseEntity.ok(Map.of("message", "Login successful"));
+            return ResponseEntity.ok(Map.of(
+                    "message", "Login successful",
+                    "business", bizId
+            ));
         } catch (BadCredentialsException ex) {
-            // Password incorrect or user not found
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Incorrect username or password"));
         } catch (Exception ex) {
-            // General fallback
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Something went wrong"));
         }
