@@ -1,10 +1,21 @@
-<p align="center">
-  <img src="https://github.com/aunghein-dev/frontend_stocksManagement/blob/main/public/onlylogo.png?raw=true" alt="Openware Logo" width="100"/>
-</p>
+<img src="https://github.com/aunghein-dev/frontend_stocksManagement/blob/main/public/onlylogo.png?raw=true" alt="Openware Logo" width="111" align="right" hspace="0" />
 
-# Openware Stock Manager - Backend
+# Openware Backend
 
-This is the robust Spring Boot backend for the Openware Stock Manager, a modern Point-of-Sale (POS) inspired web application. It handles all business logic, data persistence, and API interactions, supporting a multi-tenant architecture with secure data isolation.
+![Language](https://img.shields.io/badge/language-Java-blue)
+![Framework](https://img.shields.io/badge/framework-Spring%20Boot-brightgreen)
+![Security](https://img.shields.io/badge/security-Spring%20Security-red)
+![Database](https://img.shields.io/badge/database-PostgreSQL-316192)
+![ORM](https://img.shields.io/badge/ORM-Hibernate-59666C)
+![Validation](https://img.shields.io/badge/validation-Spring%20Validation-orange)
+![GeoIP](https://img.shields.io/badge/geoip-MaxMind-0A66C2)
+![API](https://img.shields.io/badge/API-REST%20%26%20WebFlux-00A6FF)
+![JWT](https://img.shields.io/badge/auth-JWT-yellow)
+![Build](https://img.shields.io/badge/build-Maven-C71A36)
+![Status](https://img.shields.io/badge/status-active-brightgreen)
+
+This is the **Spring Boot backend** for **Openware ERP / POS**.  
+It powers the system with robust APIs, business logic, and persistence.
 
 ---
 
@@ -14,10 +25,10 @@ This is the robust Spring Boot backend for the Openware Stock Manager, a modern 
 * [Technologies Used](#technologies-used)
 * [Architecture](#architecture)
 * [Getting Started](#getting-started)
-    * [Prerequisites](#prerequisites)
-    * [Installation](#installation)
-    * [Configuration](#configuration)
-    * [Running the Application](#running-the-application)
+  * [Prerequisites](#prerequisites)
+  * [Installation](#installation)
+  * [Configuration](#configuration)
+  * [Running the Application](#running-the-application)
 * [API Endpoints](#api-endpoints)
 * [Deployment](#deployment)
 * [Contributing](#contributing)

@@ -5,10 +5,8 @@ import com.aunghein.SpringTemplate.model.Business;
 import com.aunghein.SpringTemplate.model.Users;
 import com.aunghein.SpringTemplate.model.dto.StorageResponse;
 import com.aunghein.SpringTemplate.repository.UserRepo;
-import com.aunghein.SpringTemplate.service.BillingService;
-import com.aunghein.SpringTemplate.service.BusinessService;
-import com.aunghein.SpringTemplate.service.JWTService;
-import com.aunghein.SpringTemplate.service.UserService;
+import com.aunghein.SpringTemplate.service.*;
+import com.aunghein.SpringTemplate.utils.IpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +29,7 @@ public class UserController {
     private final UserRepo userRepo;
     private final BusinessService businessService;
     private final BillingService billingService;
+    private final SessionService sessionService;
 
     @PutMapping("/reset/password/{id}")
     public ResponseEntity<?> resetPassword(@PathVariable Long id,
@@ -75,21 +74,32 @@ public class UserController {
 
     @CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Users user, HttpServletResponse response) {
+    public ResponseEntity<?> login(@RequestBody Users user,
+                                   HttpServletRequest request,
+                                   HttpServletResponse response) {
         try {
+            // 1) authenticate -> JWT
             String token = service.verify(user);
+
+            // 2) resolve user + business
+            Long userId = service.getUserIdByUsername(user.getUsername()); // helper shown below
             var bizInfo = businessService.getBizInfoByEmail(user.getUsername());
             Long bizId = (bizInfo != null) ? bizInfo.getBusinessId() : null;
 
+            // 3) capture IP/UA and UPSERT the single session row for this user
+            String ip = IpUtils.getClientIp(request);
+            String userAgent = request.getHeader("User-Agent");
+            sessionService.upsertOnLogin(userId, ip, userAgent);
+
+            // 4) set secure cookie
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
-                    .secure(true)
-                    .sameSite("None")
+                    .secure(true)       // requires HTTPS
+                    .sameSite("None")   // use Lax if not cross-site
                     .path("/")
                     .domain("openwaremyanmar.site")
                     .maxAge(Duration.ofDays(3650))
                     .build();
-
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
             return ResponseEntity.ok(Map.of(
@@ -105,9 +115,10 @@ public class UserController {
         }
     }
 
-
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<?> logout(HttpServletRequest request,
+                                    HttpServletResponse response) {
+        // expire the cookie regardless
         ResponseCookie cookie = ResponseCookie.from("token", "")
                 .httpOnly(true)
                 .secure(true) // Match the original
@@ -116,10 +127,21 @@ public class UserController {
                 .domain("openwaremyanmar.site") // Match the original
                 .maxAge(0) // Expire immediately
                 .build();
-
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-        return ResponseEntity.ok("Logged out successfully");
+        // best‑effort: mark the single session row INACTIVE by userId
+        try {
+            String token = GetTokenFromRequest.getToken(request, request.getHeader("Authorization"));
+            if (token != null && !token.isBlank()) {
+                String username = jwtService.extractUsername(token);
+                Long userId = service.getUserIdByUsername(username);
+                if (userId != null) {
+                    sessionService.markLogoutByUser(userId); // no sessionId needed
+                }
+            }
+        } catch (Exception ignored) { /* ignore and still return OK */ }
+
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
 

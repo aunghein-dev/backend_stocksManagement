@@ -58,8 +58,6 @@ public class UserService {
         return authentication.isAuthenticated()? jwtService.generateToken(user.getUsername()) : "fail";
     }
 
-
-
     @Transactional
     public String editUserImage(Long userId, MultipartFile profilePicture) {
         Users toEditUser = userRepo.findById(userId)
@@ -145,5 +143,10 @@ public class UserService {
         Users user = userRepo.findById(id).orElseThrow();
         user.setPassword(encoder.encode(newPassword));
         return userRepo.save(user);
+    }
+
+    public Long getUserIdByUsername(String username) {
+        Users u = userRepo.findByUsername(username);
+        return (u != null) ? u.getId() : null;
     }
 }
