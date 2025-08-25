@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   app:
-    image: ghcr.io/aunghein-dev/backend_stocksmanagement:${IMAGE_TAG}
+    image: ghcr.io/aunghein-dev/backend_stocksmanagement:d51643225c447f96779fea0c0507ec6521c0b132
     container_name: backend-stock
     restart: unless-stopped
     env_file:
