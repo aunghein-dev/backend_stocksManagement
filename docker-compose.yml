@@ -1,18 +1,18 @@
 version: "3.8"
 services:
   app:
-    image: ghcr.io/aunghein-dev/backend_stocksmanagement:d51643225c447f96779fea0c0507ec6521c0b132
+    image: ghcr.io/aunghein-dev/backend_stocksmanagement:b0a0254c1b4b7734761650714bfca9484c3a6f91
     container_name: backend-stock
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      MEDIA_CLEANUP_SECRET: ${MEDIA_CLEANUP_SECRET}
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_API_KEY: ${SUPABASE_API_KEY}
-      SUPABASE_BUCKET: ${SUPABASE_BUCKET}
+      SPRING_DATASOURCE_URL: 
+      SPRING_DATASOURCE_USERNAME: 
+      SPRING_DATASOURCE_PASSWORD: 
+      JWT_SECRET: 
+      MEDIA_CLEANUP_SECRET: 
+      SUPABASE_URL: 
+      SUPABASE_API_KEY: 
+      SUPABASE_BUCKET: 
       APP_GEOIP_DATABASE_PATH: /data/GeoLite2-City.mmdb
       JAVA_OPTS: >
         -Xms128m -Xmx256m
