@@ -1,12 +1,24 @@
 version: "3.8"
-
 services:
   app:
-    image: ghcr.io/aunghein-dev/backend_stocksmanagement:40afedafc37392271b10e7d7c34cf1320eb7c531
+    image: ghcr.io/aunghein-dev/backend_stocksmanagement:${IMAGE_TAG}
     container_name: backend-stock
     restart: unless-stopped
     env_file:
       - /opt/backend-stock/.env
+    environment:
+      JAVA_OPTS: >
+        -Xms128m -Xmx256m
+        -XX:+UseSerialGC
+        -XX:MaxMetaspaceSize=128m
+        -XX:MaxDirectMemorySize=64m
+    # If your Compose honors resources:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
     ports:
       - "127.0.0.1:9999:8080"
     volumes:
