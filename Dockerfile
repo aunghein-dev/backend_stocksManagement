@@ -1,26 +1,20 @@
-# ---------- build stage ----------
+# ---- Build stage ----
 FROM maven:3.9-eclipse-temurin-21 AS build
-WORKDIR /app
-
-# Cache deps
+WORKDIR /workspace
 COPY pom.xml .
-RUN mvn -q -DskipTests dependency:go-offline
-
-# Build
+RUN mvn -B -q -DskipTests dependency:go-offline
 COPY src ./src
-RUN mvn -q -DskipTests clean package
+RUN mvn -B -q package -DskipTests
 
-# ---------- run stage ----------
+# ---- Runtime stage ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
+COPY --from=build /workspace/target/*.jar /app/app.jar
 
-# Copy Spring Boot fat jar
-COPY --from=build /app/target/*.jar app.jar
+# run as non-root
+RUN useradd -ms /bin/bash appuser
+USER appuser
 
-# App listens on 8080 inside the container
+ENV JAVA_OPTS="-Xms256m -Xmx512m"
 EXPOSE 8080
-
-# Allow optional JVM tuning via JAVA_OPTS (not required)
-ENV JAVA_OPTS=""
-
 ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]

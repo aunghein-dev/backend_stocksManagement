@@ -1,0 +1,194 @@
+name: CI/CD to Portainer (API)
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/aunghein-dev/backend_stocksmanagement
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Render compose with new tag
+        run: |
+          sudo apt-get update && sudo apt-get install -y gettext-base jq
+          export IMAGE_TAG=${GITHUB_SHA}
+          envsubst < docker-compose.prod.yml > deploy-compose.yml
+          echo "---- deploy-compose.yml ----"
+          sed -n '1,200p' deploy-compose.yml
+
+      - name: Get Portainer JWT (robust)
+        id: auth
+        env:
+          URL: ${{ secrets.PORTAINER_URL }}
+          USERNAME: ${{ secrets.PORTAINER_USERNAME }}
+          PASSWORD: ${{ secrets.PORTAINER_PASSWORD }}
+          INSECURE_TLS: ${{ vars.PORTAINER_INSECURE_TLS }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+          # Build JSON safely (handles special characters)
+          BODY=$(jq -n --arg u "$USERNAME" --arg p "$PASSWORD" '{Username:$u, Password:$p}')
+
+          # Follow redirects; allow -k only if INSECURE_TLS=1
+          CURL_OPTS="-sSL"
+          if [ "$INSECURE_TLS" = "1" ]; then CURL_OPTS="$CURL_OPTS -k"; fi
+
+          HTTP_CODE=$(curl $CURL_OPTS -o resp.json -w "%{http_code}" \
+            -X POST "$URL/api/auth" \
+            -H "Content-Type: application/json" \
+            --data "$BODY")
+
+          echo "Auth HTTP_CODE=$HTTP_CODE"
+          echo "Auth response (first 200 chars):"
+          head -c 200 resp.json || true
+          echo
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Portainer auth failed (HTTP $HTTP_CODE). Check PORTAINER_URL, HTTPS, and creds."
+            exit 1
+          fi
+
+          TOKEN=$(jq -r '.jwt // empty' < resp.json)
+          if [ -z "$TOKEN" ]; then
+            echo "::error::No .jwt in /api/auth response (likely HTML/redirect). Ensure /api is reachable at this URL."
+            exit 1
+          fi
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+
+      - name: Update stack (auto-discover & correct path)
+        env:
+          URL: ${{ secrets.PORTAINER_URL }}
+          INSECURE_TLS: ${{ vars.PORTAINER_INSECURE_TLS }}
+          STACK_NAME: ${{ vars.PORTAINER_STACK_NAME }}               # e.g. stack-name from portainer
+          STACK_ID_OVERRIDE: ${{ secrets.PORTAINER_STACK_ID_OVERRIDE }}
+          IMAGE: ${{ env.IMAGE }}                                    # ghcr.io/aunghein-dev/...
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+          CURL_OPTS="-sSL"
+          if [ "$INSECURE_TLS" = "1" ]; then CURL_OPTS="$CURL_OPTS -k"; fi
+
+          TOKEN="${{ steps.auth.outputs.token }}"
+          if [ -z "$TOKEN" ]; then echo "::error::Missing JWT token"; exit 1; fi
+
+          echo "Discovering stacks..."
+          curl $CURL_OPTS -H "Authorization: Bearer $TOKEN" "$URL/api/stacks" -o stacks.json
+          echo "Available stacks (Id, Name, EndpointId):"
+          jq '.[] | {Id, Name, EndpointId}' stacks.json
+
+          # Prefer explicit ID override if provided
+          if [ -n "$STACK_ID_OVERRIDE" ]; then
+            STACK_ID="$STACK_ID_OVERRIDE"
+            ENDPOINT_ID=$(jq -r --arg id "$STACK_ID" '.[] | select(.Id==($id|tonumber)) | .EndpointId' stacks.json)
+            if [ -z "$ENDPOINT_ID" ] || [ "$ENDPOINT_ID" = "null" ]; then
+              echo "::error::Invalid STACK_ID_OVERRIDE=$STACK_ID (not found)."
+              exit 1
+            fi
+            echo "Using override STACK_ID=$STACK_ID ENDPOINT_ID=$ENDPOINT_ID"
+          else
+            if [ -z "$STACK_NAME" ]; then
+              echo "::error::PORTAINER_STACK_NAME is not set. Set it (e.g. 'backend-stock') OR set STACK_ID_OVERRIDE."
+              exit 1
+            fi
+            MATCH_COUNT=$(jq --arg n "$STACK_NAME" '[ .[] | select(.Name==$n) ] | length' stacks.json)
+            if [ "$MATCH_COUNT" -eq 0 ]; then
+              echo "::error::No stack named '$STACK_NAME' found."; exit 1
+            fi
+            if [ "$MATCH_COUNT" -gt 1 ]; then
+              echo "::warning::Multiple stacks named '$STACK_NAME'. Choosing the one with the highest Id."
+              STACK_ID=$(jq -r --arg n "$STACK_NAME" '[ .[] | select(.Name==$n) ] | max_by(.Id) | .Id' stacks.json)
+            else
+              STACK_ID=$(jq -r --arg n "$STACK_NAME" '.[] | select(.Name==$n) | .Id' stacks.json)
+            fi
+            ENDPOINT_ID=$(jq -r --argjson id "$STACK_ID" '.[] | select(.Id==$id) | .EndpointId' stacks.json)
+            echo "Selected STACK_ID=$STACK_ID ENDPOINT_ID=$ENDPOINT_ID"
+          fi
+
+          # Inspect to detect Git vs file/editor stack
+          curl $CURL_OPTS -H "Authorization: Bearer $TOKEN" "$URL/api/stacks/$STACK_ID?endpointId=$ENDPOINT_ID" -o stack.json
+          IS_GIT=$(jq -r 'if .GitConfig then "1" else "0" end' stack.json)
+          echo "Git-based stack? $IS_GIT"
+
+          if [ "$IS_GIT" = "1" ]; then
+            echo "Git stack detected. Bumping image tag in repo compose, then redeploy…"
+
+            # 1) Commit the new image tag to the repo's compose (so Git redeploy uses it)
+            NEW_TAG="$GITHUB_SHA"
+
+            # If your compose uses ${IMAGE_TAG}, render it in-place:
+            export IMAGE_TAG="$NEW_TAG"
+            envsubst < docker-compose.prod.yml > docker-compose.prod.yml.new || true
+            mv docker-compose.prod.yml.new docker-compose.prod.yml || true
+
+            # Also handle the case where a fixed tag is present: replace tag after the image name
+            # e.g., ghcr.io/aunghein-dev/backend_stockmanagement:<anything> -> ghcr.io/...:<NEW_TAG>
+            sed -i -E "s|(${IMAGE}:)[^\"'[:space:]]+|\1${NEW_TAG}|g" docker-compose.prod.yml || true
+
+            # Commit only if there are changes
+            if ! git diff --quiet -- docker-compose.prod.yml; then
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add docker-compose.prod.yml
+              git commit -m "deploy: ${IMAGE}:${NEW_TAG}"
+              git push
+            else
+              echo "No compose changes to commit (already on ${NEW_TAG}?)"
+            fi
+
+            # 2) Correct method: PUT for git/redeploy
+            HTTP_CODE=$(curl $CURL_OPTS -o redeploy.json -w "%{http_code}" \
+              -X PUT "$URL/api/stacks/$STACK_ID/git/redeploy?endpointId=$ENDPOINT_ID" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              --data '{}')
+            echo "git/redeploy HTTP_CODE=$HTTP_CODE"
+            head -c 200 redeploy.json || true; echo
+            [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || (echo "::error::Git redeploy failed." && exit 1)
+
+          else
+            echo "File/editor stack detected. Updating with rendered compose…"
+            BODY=$(jq -Rs '{stackFileContent: ., prune: true}' < deploy-compose.yml)
+            HTTP_CODE=$(curl $CURL_OPTS -o update.json -w "%{http_code}" \
+              -X PUT "$URL/api/stacks/$STACK_ID?endpointId=$ENDPOINT_ID" \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-raw "$BODY")
+            echo "update HTTP_CODE=$HTTP_CODE"
+            head -c 200 update.json || true; echo
+            [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ] || (echo "::error::Stack update failed." && exit 1)
+          fi
+
+          echo "Stack updated."

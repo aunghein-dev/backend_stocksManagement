@@ -21,3 +21,8 @@ Thumbs.db
 
 # Environment variables - CRITICAL FOR SECURITY
 .env
+
+# MaxMind DB (local only)
+GeoLite2-*.mmdb
+*.mmdb
+src/main/resources/GeoLite2-City.mmdb

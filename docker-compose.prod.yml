@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  app:
+    image: ghcr.io/aunghein-dev/backend_stocksmanagement:${IMAGE_TAG}
+    container_name: backend-stock
+    restart: unless-stopped
+    env_file:
+      - /opt/backend-stock/.env
+    ports:
+      - "127.0.0.1:9999:8080"
+    volumes:
+      - /data/GeoLite2-City.mmdb:/data/GeoLite2-City.mmdb:ro
