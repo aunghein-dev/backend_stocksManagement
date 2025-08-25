@@ -26,3 +26,8 @@ Thumbs.db
 GeoLite2-*.mmdb
 *.mmdb
 src/main/resources/GeoLite2-City.mmdb
+my.env
+.env
+*.env
+*.mmdb
+src/main/resources/GeoLite2-City.mmdb
