@@ -72,7 +72,7 @@ public class UserController {
         }
     }
 
-    //@CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
+    @CrossOrigin(origins = "https://app.openwaremyanmar.site", allowCredentials = "true")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Users user,
                                    HttpServletRequest request,
@@ -97,7 +97,7 @@ public class UserController {
                     .secure(true)       // requires HTTPS
                     .sameSite("None")   // use Lax if not cross-site
                     .path("/")
-                    //.domain("openwaremyanmar.site")
+                    .domain("openwaremyanmar.site")
                     .maxAge(Duration.ofDays(3650))
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -124,7 +124,7 @@ public class UserController {
                 .secure(true) // Match the original
                 .sameSite("None") // Match the original
                 .path("/") // Match the original
-                //.domain("openwaremyanmar.site") // Match the original
+                .domain("openwaremyanmar.site") // Match the original
                 .maxAge(0) // Expire immediately
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
