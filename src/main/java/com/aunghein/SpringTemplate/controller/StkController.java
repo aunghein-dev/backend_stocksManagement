@@ -86,12 +86,17 @@ public class StkController {
 
     @CrossOrigin
     @PostMapping(value = "/stkG/biz/{bizId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<StkGroup> createStkGroup(@PathVariable Long bizId,
-                                   @RequestPart("json") StkGroup stkGroup,
-                                   @RequestPart("groupImage") MultipartFile groupImage,
-                                   @RequestPart("itemImages") List<MultipartFile> itemImages) {
-        return ResponseEntity.ok(service.createStkGroupByBusinessId(bizId, stkGroup, groupImage, itemImages));
+    public ResponseEntity<StkGroup> createStkGroup(
+            @PathVariable Long bizId,
+            @RequestPart("json") StkGroup stkGroup,
+            @RequestPart("groupImage") MultipartFile groupImage,
+            @RequestPart(value = "itemImages", required = false) List<MultipartFile> itemImages) {
+
+        return ResponseEntity.ok(
+                service.createStkGroupByBusinessId(bizId, stkGroup, groupImage, itemImages)
+        );
     }
+
 
     @CrossOrigin
     @DeleteMapping("/stkG/{groupId}/biz/{bizId}")

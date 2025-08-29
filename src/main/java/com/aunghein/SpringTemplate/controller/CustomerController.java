@@ -5,6 +5,7 @@ import com.aunghein.SpringTemplate.model.StkGroup;
 import com.aunghein.SpringTemplate.model.dto.CustomerDashboard;
 import com.aunghein.SpringTemplate.repository.CustomerRepo;
 import com.aunghein.SpringTemplate.service.CustomerService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,11 +17,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/customer")
+@RequiredArgsConstructor
 public class CustomerController {
 
-
-    @Autowired
-    private CustomerService cusService;
+    private final CustomerService cusService;
 
     @GetMapping("/dash/biz/{bizId}")
     public ResponseEntity<CustomerDashboard> getCustomerDashboard(@PathVariable Long bizId){

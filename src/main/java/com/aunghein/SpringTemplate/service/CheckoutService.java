@@ -1,6 +1,7 @@
 package com.aunghein.SpringTemplate.service;
 
 import com.aunghein.SpringTemplate.model.*;
+import com.aunghein.SpringTemplate.model.dto.CheckoutResponse;
 import com.aunghein.SpringTemplate.model.dto.VouncherGen;
 import com.aunghein.SpringTemplate.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -98,7 +99,7 @@ public class CheckoutService {
     }
 
 
-    public List<Checkout> getCheckOut(Long bizId) {
+    public List<CheckoutResponse> getCheckOut(Long bizId) {
         return checkoutRepo.findCheckoutByBizId(bizId);
     }
 

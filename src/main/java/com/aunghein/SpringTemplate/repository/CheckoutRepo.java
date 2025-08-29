@@ -11,23 +11,39 @@ import java.util.Optional;
 
 public interface CheckoutRepo extends JpaRepository<Checkout, Long> {
 
-    @Query(value = "SELECT * FROM checkout WHERE biz_id = :businessId", nativeQuery = true)
-    List<Checkout> findCheckoutByBizId(@Param("businessId") Long businessId);
+    @Query(value = """
+            SELECT\s
+                c.*,\s
+                COALESCE(g.group_original_price, 0) AS group_original_price,
+                COALESCE(g.group_original_price, 0) * COALESCE(c.checkout_qty, 0) AS sub_original
+            FROM checkout c
+            LEFT JOIN stk_group g\s
+                   ON g.group_id = c.stk_group_id
+            WHERE c.biz_id = :businessId;
+            """, nativeQuery = true)
+    List<CheckoutResponse> findCheckoutByBizId(@Param("businessId") Long businessId);
 
     @Query(value = "SELECT * FROM checkout WHERE tranid = :tranId AND biz_id = :bizId LIMIT 1", nativeQuery = true)
     Optional<Checkout> findCheckoutByBizIdTranId(@Param("bizId") Long bizId, @Param("tranId") Long tranId);
 
     @Query(value = """
-    SELECT batch_id as batchId,
-           SUM(checkout_qty) as totalQty,
-           COUNT(stk_item_id) as stkItemCnt,
-           SUM(sub_checkout) as checkoutTotal,
-           MAX(tran_date) as tranDate,
-           tran_user_email,
-           biz_id
-    FROM checkout
-    WHERE biz_id = :bizId
-    GROUP BY batch_id, tran_user_email, biz_id
+            SELECT\s
+                c.batch_id AS batchId,
+                SUM(c.checkout_qty) AS totalQty,
+                COUNT(c.stk_item_id) AS stkItemCnt,
+                SUM(c.sub_checkout) AS checkoutTotal,
+                MAX(c.tran_date) AS tranDate,
+                c.tran_user_email,
+                c.biz_id,
+                COALESCE(SUM(g.group_original_price * c.checkout_qty), 0) AS profit
+            FROM checkout c
+            LEFT JOIN stk_group g\s
+                   ON g.group_id = c.stk_group_id
+            WHERE c.biz_id = :bizId
+            GROUP BY\s
+                c.batch_id,\s
+                c.tran_user_email,\s
+                c.biz_id;
     """, nativeQuery = true)
     List<BatchReport> findBatchReportByBizId(@Param("bizId") Long bizId);
 
@@ -37,7 +53,7 @@ public interface CheckoutRepo extends JpaRepository<Checkout, Long> {
     @Query(value = "SELECT * FROM get_radar_data(:bizId)", nativeQuery = true)
     List<RadarData> getRadarDataByBizId(@Param("bizId") Long bizId);
 
-    @Query(value = "SELECT * FROM get_dashboard_summary(:bizId)", nativeQuery = true)
+    @Query(value = "SELECT * FROM get_dashboard_summarry_v1(:bizId)", nativeQuery = true)
     DashboardMiniCard getDashboardSummary(@Param("bizId") Long bizId);
 
     @Query(value = "SELECT * FROM get_pie_data(:bizId)", nativeQuery = true)

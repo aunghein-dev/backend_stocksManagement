@@ -20,7 +20,7 @@ public class CheckoutController {
     private CheckoutService checkoutService;
 
     @GetMapping(value = "/{bizId}")
-    public ResponseEntity<List<Checkout>> getCheckOut(@PathVariable Long bizId){
+    public ResponseEntity<?> getCheckOut(@PathVariable Long bizId){
         return ResponseEntity.ok(checkoutService.getCheckOut(bizId));
     }
 
