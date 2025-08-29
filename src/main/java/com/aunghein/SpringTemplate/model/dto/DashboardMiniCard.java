@@ -7,4 +7,5 @@ public interface DashboardMiniCard {
     double getGrowth();
     Long getOrders();
     Long getProducts();
+    BigDecimal getProfit();
 }

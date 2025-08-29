@@ -6,7 +6,11 @@ import com.aunghein.SpringTemplate.model.StkItem;
 import com.aunghein.SpringTemplate.repository.BusinessRepo;
 import com.aunghein.SpringTemplate.repository.StkItemRepo;
 import com.aunghein.SpringTemplate.repository.StkRepo;
+import com.aunghein.SpringTemplate.service.minio.MinioService;
+import com.aunghein.SpringTemplate.utils.FileStorageManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.NoTransactionException;
@@ -22,21 +26,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
+@RequiredArgsConstructor
 public class StkService{
 
     private static final Logger log = LoggerFactory.getLogger(StkService.class);
-
-    @Autowired
-    private StkRepo stkRepo;
-
-    @Autowired
-    private BusinessRepo businessRepo;
-
-    @Autowired
-    private SupabaseService supabaseService;
-
-    @Autowired
-    private StkItemRepo stkItemRepo;
+    private final StkRepo stkRepo;
+    private final BusinessRepo businessRepo;
+    private final SupabaseService supabaseService;
+    private final StkItemRepo stkItemRepo;
+    private final MinioService minioService;
 
     // ✅ GET with items (default if using JPA fetch type LAZY unless overridden in repo)
     public List<StkGroup> getStkGroupByBusinessId(Long bizId) {
@@ -95,21 +93,40 @@ public class StkService{
             e.printStackTrace();
         }
 
+        /*
+        //UPLOAD
+        String url2 = FileStorageManager.FILE_STORAGE;
+        try {
+            url2 = minioService.uploadFile(groupImage);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        */
+
         stkGroup.setGroupImage(url);
 
         // ✅ Link each child item to the parent group
-        IntStream.range(0, stkGroup.getItems().size()).parallel().forEach(i -> {
-            StkItem item = stkGroup.getItems().get(i);
-            item.setStkGroup(stkGroup);
+        if (!stkGroup.isColorless()) {
+            IntStream.range(0, stkGroup.getItems().size()).forEach(i -> {
+                StkItem item = stkGroup.getItems().get(i);
+                item.setStkGroup(stkGroup);
 
-            String itemImageUrl = "https://svmeynesalueoxzhtdqp.supabase.co/storage/";
-            if (itemImages != null && i < itemImages.size()) {
-                MultipartFile file = itemImages.get(i);
-                itemImageUrl = uploadItemImagesSafe(file);
-            }
+                if (itemImages != null && i < itemImages.size()) {
+                    MultipartFile file = itemImages.get(i);
+                    String itemImageUrl = uploadItemImagesSafe(file);
+                    item.setItemImage(itemImageUrl);
+                } else {
+                    item.setItemImage(null); // or default placeholder
+                }
+            });
+        } else {
+            // Colorless: skip uploading item images
+            stkGroup.getItems().forEach(item -> {
+                item.setStkGroup(stkGroup);
+                item.setItemImage(null);
+            });
+        }
 
-            item.setItemImage(itemImageUrl);
-        });
         return stkRepo.save(stkGroup);
     }
 
@@ -125,10 +142,24 @@ public class StkService{
                 supabaseService.deleteFile(group.getGroupImage());
             }
 
+            /*
+            //DELETE
+            if (group.getGroupImage() != null && group.getGroupImage().contains("file.openwaremyanmar")) {
+                minioService.deleteFile(group.getGroupImage());
+            }
+            */
+
             for (StkItem item : group.getItems()) {
                 if (item.getItemImage() != null && item.getItemImage().startsWith("https://svmeynesalueoxzhtdqp.supabase.co")) {
                     supabaseService.deleteFile(item.getItemImage());
                 }
+
+                /*
+                //DELETE
+                if (item.getItemImage() != null && item.getItemImage().contains("file.openwaremyanmar")) {
+                    minioService.deleteFile(item.getItemImage());
+                }
+                */
             }
 
             stkRepo.delete(group);
@@ -162,6 +193,7 @@ public class StkService{
         existingGroup.setGroupName(updatedGroupData.getGroupName());
         existingGroup.setGroupUnitPrice(updatedGroupData.getGroupUnitPrice());
         existingGroup.setReleasedDate(updatedGroupData.getReleasedDate());
+        existingGroup.setGroupOriginalPrice(updatedGroupData.getGroupOriginalPrice());
 
         // 3) Replace group image (delete old one first)
         if (groupImage != null && !groupImage.isEmpty()) {
@@ -169,9 +201,26 @@ public class StkService{
             if (oldGroupImage != null) {
                 supabaseService.deleteFile(oldGroupImage);
             }
+
+            /*
+            //DELETE
+            if (oldGroupImage != null) {
+                try {
+                    minioService.deleteFile(oldGroupImage);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            */
+
             try {
                 String newGroupImageUrl = supabaseService.uploadGroupImage(groupImage);
+                /*
+                //UPLOAD
+                String newGroupImageUrl = minioService.uploadFile(groupImage);
+                */
                 existingGroup.setGroupImage(newGroupImageUrl);
+
             } catch (Exception e) {
                 throw new RuntimeException("Failed to upload group image", e);
             }
@@ -213,6 +262,18 @@ public class StkService{
                 if (oldItem.getItemImage() != null) {
                     supabaseService.deleteFile(oldItem.getItemImage());
                 }
+
+                /*
+                //DELETE
+                if (oldItem.getItemImage() !=null) {
+                    try {
+                        minioService.deleteFile(oldItem.getItemImage());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                */
+
                 itemsToRemove.add(oldItem);
             }
         }
@@ -251,8 +312,25 @@ public class StkService{
                         if (target.getItemImage() != null) {
                             supabaseService.deleteFile(target.getItemImage());
                         }
+
+                        /*
+                        //DELETE
+                        if (target.getItemImage() != null) {
+                            try {
+                                minioService.deleteFile(target.getItemImage());
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        */
+
                         try {
                             String newItemImageUrl = supabaseService.uploadItemImage(itemImageFile);
+
+                            /*
+                            //UPLOAD
+                            String newItemImageUrl = minioService.uploadFile(itemImageFile);
+                            */
                             target.setItemImage(newItemImageUrl);
                         } catch (Exception e) {
                             throw new RuntimeException("Failed to upload item image for existing item " + id, e);
@@ -271,6 +349,17 @@ public class StkService{
                         target.setItemImage(null);
                     }
 
+                    /*
+                    //DELETE
+                    if (!hasNewImage && updatedItem.getItemImage() == null && target.getItemImage() != null) {
+                        try {
+                            minioService.deleteFile(target.getItemImage());
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        target.setItemImage(null);
+                    }
+                   */
                 }
             } else {
                 // Add new item
@@ -289,6 +378,18 @@ public class StkService{
                         throw new RuntimeException("Failed to upload new item image for new item " + i, e);
                     }
                 }
+
+                /*
+                //UPLOAD
+                if (hasNewImage) {
+                    try {
+                        String newItemImageUrl = minioService.uploadFile(itemImageFile);
+                        newItem.setItemImage(newItemImageUrl);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to upload new item image for new item " + i, e);
+                    }
+                }
+                */
 
                 existingGroup.addItem(newItem); // Add to the group's collection
             }
@@ -309,6 +410,17 @@ public class StkService{
             e.printStackTrace(); // Log appropriately
             return null;
         }
+
+        /*
+        //UPLOAD
+        try {
+            return minioService.uploadFile(file);
+        } catch (Exception e) {
+            e.printStackTrace(); // Log appropriately
+            return null;
+        }
+        */
+
     }
 
 
@@ -341,6 +453,20 @@ public class StkService{
             log.info("Item {} does not have a Supabase uploaded image or image URL is null.", itemId);
         }
 
+        /*
+        //DELETE
+        if (toDeleteItem.getItemImage() != null && toDeleteItem.getItemImage().contains("file.openwaremyanmar")) {
+            try {
+                minioService.deleteFile(toDeleteItem.getItemImage());
+                log.info("Successfully triggered deletion for image: {}", toDeleteItem.getItemImage());
+            } catch (Exception e) {
+                log.error("Failed to delete image from Supabase: {}", toDeleteItem.getItemImage(), e);
+            }
+        } else {
+            log.info("Item {} does not have a Supabase uploaded image or image URL is null.", itemId);
+        }
+        */
+
         // NEW LOGIC: Check if this is the last item in the group
         // This check must happen *before* deleting toDeleteItem from the DB.
         if (currentItemListForGroup.size() == 1) { // If there's only one item currently in the list
@@ -361,6 +487,21 @@ public class StkService{
             } else {
                 log.info("Group {} does not have a Supabase uploaded image or image URL is null.", groupId);
             }
+
+            /*
+            //DELETE
+            if (toDeleteImgUrl != null && toDeleteImgUrl.contains("file.openwaremyanmar")) {
+                try {
+                    minioService.deleteFile(toDeleteItem.getItemImage());
+                    log.info("Successfully triggered deletion for image: {}", toDeleteItem.getItemImage());
+                } catch (Exception e) {
+                    log.error("Failed to delete image from Supabase: {}", toDeleteItem.getItemImage(), e);
+                }
+
+            } else {
+                log.info("Group {} does not have a Supabase uploaded image or image URL is null.", groupId);
+            }
+            */
             stkRepo.delete(groupToDelete);
         }
 

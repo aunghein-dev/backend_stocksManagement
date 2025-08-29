@@ -2,6 +2,7 @@ package com.aunghein.SpringTemplate.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,6 +26,14 @@ public class StkGroup {
 
     private String groupName;
     private float groupUnitPrice;
+
+    @Column(name = "group_original_price", nullable = false, columnDefinition = "float4 default 0")
+    private float groupOriginalPrice = 0;
+
+
+    @Column(name = "is_colorless", nullable = false)
+    @JsonProperty("isColorless")
+    private boolean isColorless;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date releasedDate;

@@ -3,6 +3,8 @@ package com.aunghein.SpringTemplate.service;
 import com.aunghein.SpringTemplate.model.Customer;
 import com.aunghein.SpringTemplate.model.dto.CustomerDashboard;
 import com.aunghein.SpringTemplate.repository.CustomerRepo;
+import com.aunghein.SpringTemplate.service.minio.MinioService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,13 +17,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerService {
 
-    @Autowired
-    private CustomerRepo customerRepo;
-
-    @Autowired
-    private SupabaseService supabaseService;
+    private final CustomerRepo customerRepo;
+    private final SupabaseService supabaseService;
+    //private final MinioService minioService;
 
     public Customer createNewCustomer(Long bizId, Customer newCustomer, MultipartFile customerFileImg) {
         String url = null;
@@ -30,6 +31,17 @@ public class CustomerService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        /*
+        //UPLOAD
+        String url2 = null;
+        try {
+            url2 = minioService.uploadFile(customerFileImg);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        */
+
         newCustomer.setImgUrl(url);
         newCustomer.setBizId(bizId);
         newCustomer.setRowId(null);
@@ -60,6 +72,17 @@ public class CustomerService {
                 // Upload the new image
                 String newImageUrl = supabaseService.uploadGroupImage(customerFileImg);
                 updatedCustomerData.setImgUrl(newImageUrl);
+
+                /*
+                //DELETE
+                if (existingCustomer.getImgUrl() != null && existingCustomer.getImgUrl().contains("file.openwaremyanmar")){
+                    minioService.deleteFile(existingCustomer.getImgUrl());
+                }
+                //UPLOAD
+                String newImageUrl = minioService.uploadFile(customerFileImg);
+                updatedCustomerData.setImgUrl(newImageUrl);
+                */
+
             } catch (Exception e) {
                 // Log the exception properly
                 System.err.println("Failed to upload new customer image: " + e.getMessage());
@@ -72,6 +95,18 @@ public class CustomerService {
             if (existingCustomer.getImgUrl() != null && existingCustomer.getImgUrl().startsWith("https://svmeynesalueoxzhtdqp.supabase.co")) {
                 supabaseService.deleteFile(existingCustomer.getImgUrl());
             }
+
+            /*
+            //DELETE
+            if (existingCustomer.getImgUrl() != null && existingCustomer.getImgUrl().contains("file.openwaremyanmar")){
+                try {
+                    minioService.deleteFile(existingCustomer.getImgUrl());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            */
+
             updatedCustomerData.setImgUrl(null); // Explicitly set to null
         } else {
             // No new file provided, and client did NOT send null/empty for imgUrl.
@@ -132,6 +167,17 @@ public class CustomerService {
                 // throw new RuntimeException("Image deletion failed", e);
             }
         }
+
+        /*
+        //DELETE
+        if (customerToDelete.getImgUrl() != null && customerToDelete.getImgUrl().contains("file.openwaremyanmar")){
+            try {
+                minioService.deleteFile(customerToDelete.getImgUrl());
+            } catch (Exception e) {
+                System.err.println("Failed to delete customer image from Supabase for customer CID: " + cid + ", Error: " + e.getMessage());
+            }
+        }
+        */
 
         // 3. Delete the customer from the database
         customerRepo.delete(customerToDelete);

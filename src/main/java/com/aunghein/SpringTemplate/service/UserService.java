@@ -7,6 +7,8 @@ import com.aunghein.SpringTemplate.model.dto.TellerResponse;
 import com.aunghein.SpringTemplate.repository.BusinessRepo;
 import com.aunghein.SpringTemplate.repository.ReferredCodeRepo;
 import com.aunghein.SpringTemplate.repository.UserRepo;
+import com.aunghein.SpringTemplate.service.minio.MinioService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,25 +21,16 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepo userRepo;
-
-    @Autowired
-    private BusinessRepo businessRepo;
-
-    @Autowired
-    private JWTService jwtService;
-
-    @Autowired
-    AuthenticationManager authManager;
-
-    @Autowired
-    private SupabaseService supabaseService;
-
-    @Autowired
-    private ReferredCodeRepo codeRepo;
+    private final UserRepo userRepo;
+    private final BusinessRepo businessRepo;
+    private final JWTService jwtService;
+    private final AuthenticationManager authManager;
+    private final SupabaseService supabaseService;
+    private final ReferredCodeRepo codeRepo;
+    private final MinioService minioService;
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
@@ -71,12 +64,37 @@ public class UserService {
             System.out.println("User image URL is null or not a Supabase URL, no deletion needed.");
         }
 
+        /*
+        //DELETE
+        if (toEditUser.getUserImgUrl() != null && toEditUser.getUserImgUrl().contains("file.openwaremyanmar")) {
+            try {
+                minioService.deleteFile(toEditUser.getUserImgUrl());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            // Handle the case where userImgUrl is null or doesn't start with the Supabase URL
+            // For example, log a message, or do nothing if it's an expected scenario.
+            System.out.println("User image URL is null or not a Supabase URL, no deletion needed.");
+        }
+        */
+
         String newUrl = "";
         try {
             newUrl = supabaseService.uploadProfilePictures(profilePicture);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        /*
+        //UPLOAD
+        String newUrl = "";
+        try {
+            newUrl = minioService.uploadFile(profilePicture);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        */
 
         toEditUser.setUserImgUrl(newUrl);
 

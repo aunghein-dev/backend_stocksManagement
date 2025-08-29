@@ -11,5 +11,6 @@ public interface BatchReport {
     Date getTranDate();
     String getTranUserEmail();
     Long getBizId();
+    BigDecimal getProfit();
 }
 

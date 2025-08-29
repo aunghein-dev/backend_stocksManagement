@@ -28,5 +28,4 @@ public class StkItem {
     @JoinColumn(name = "group_id", nullable = false)
     @JsonBackReference
     private StkGroup stkGroup;
-
 }
