@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   app:
-    image: ghcr.io/aunghein-dev/backend_stocksmanagement:b0a0254c1b4b7734761650714bfca9484c3a6f91
+    image: ghcr.io/aunghein-dev/backend_stocksmanagement:dc4441185c9f8f1e691d94c78490da2ef5e2a462
     container_name: backend-stock
     restart: unless-stopped
     environment:
@@ -14,10 +14,10 @@ services:
       SUPABASE_API_KEY: 
       SUPABASE_BUCKET: 
       APP_GEOIP_DATABASE_PATH: /data/GeoLite2-City.mmdb
-      MINIO_URL: ${MINIO_URL}
-      MINIO_USER: ${MINIO_USER}
-      MINIO_PASSWORD: ${MINIO_PASSWORD}
-      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_URL: 
+      MINIO_USER: 
+      MINIO_PASSWORD: 
+      MINIO_BUCKET: 
       JAVA_OPTS: >
         -Xms128m -Xmx256m
         -XX:+UseSerialGC
